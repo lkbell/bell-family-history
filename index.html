@@ -103,14 +103,19 @@ document.getElementById('f').addEventListener('submit',async function(ev){
   catch(e){ err.classList.add('show'); btn.disabled=false; btn.textContent='Come In ★';
     document.getElementById('pw').select(); }
 });
-/* remembered device: try the stored key silently; clear it if stale */
-(async function(){
+/* Wait for the gate document to finish parsing before replacing it. Calling
+   document.open/write/close from this inline script lets the original parser
+   resume afterward and append the gate onto the decrypted site. */
+async function tryRemembered(){
   var k=localStorage.getItem('bellGateKey'); if(!k) return;
   try{
     var key=await crypto.subtle.importKey('raw',b2a(k),{name:'AES-GCM'},false,['decrypt']);
     enter(await tryDecrypt(key));
   }catch(e){ try{localStorage.removeItem('bellGateKey');}catch(_){} }
-})();
+}
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',tryRemembered,{once:true});
+}else{ tryRemembered(); }
 </script>
 </body>
 </html>
